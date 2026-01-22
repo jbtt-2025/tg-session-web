@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  web:
+    image: ghcr.io/jbtt-2025/tg-session-web:latest
+    container_name: tg-session-web
+    restart: unless-stopped
+    ports:
+      - "${PORT:-8000}:${PORT:-8000}"
+    environment:
+      # Required
+      TG_NOTIFY_BOT_TOKEN: ${TG_NOTIFY_BOT_TOKEN}
+      TG_NOTIFY_BOT_NAME: ${TG_NOTIFY_BOT_NAME}
+      TG_API_ID: ${TG_API_ID:-32471437}
+      TG_API_HASH: ${TG_API_HASH:-c356cf8137a04c92ebfda0fdbd299604}
+      
+      # Optional - Server configuration
+      PORT: ${PORT:-8000}
+      HOST: ${HOST:-0.0.0.0}
+      
+      # Optional - Heartbeat configuration
+      TG_INTERVAL_SECONDS: ${TG_INTERVAL_SECONDS:-86400}
+      TG_JITTER_SECONDS: ${TG_JITTER_SECONDS:-300}
+      TG_HEART_BEAT_MAX_FAIL: ${TG_HEART_BEAT_MAX_FAIL:-3}
+      
+      # Optional - Logging
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      LOG_DIR: ${LOG_DIR:-/app/logs}
+    volumes:
+      # Persist session data across container restarts
+      - ./data:/app/data
+      # Optional: mount logs directory
+      - ./logs:/app/logs
+    networks:
+      - tg-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:${PORT:-8000}/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  tg-network:
+    driver: bridge

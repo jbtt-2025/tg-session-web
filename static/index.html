@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telegram 会话保活管理</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 600px;
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .tabs {
+            display: flex;
+            background: #f7f7f7;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 16px;
+            text-align: center;
+            cursor: pointer;
+            background: transparent;
+            border: none;
+            font-size: 14px;
+            font-weight: 500;
+            color: #666;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .tab:hover {
+            background: #ececec;
+        }
+
+        .tab.active {
+            color: #667eea;
+            background: white;
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #667eea;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 30px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+            font-family: monospace;
+        }
+
+        .input-with-help {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .input-with-help input {
+            flex: 1;
+        }
+
+        .help-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #667eea;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s;
+        }
+
+        .help-btn:hover {
+            background: #5568d3;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            margin-top: 10px;
+        }
+
+        .btn-secondary:hover {
+            box-shadow: 0 4px 12px rgba(108, 117, 125, 0.4);
+        }
+
+        .message {
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .message.error {
+            background: #fee;
+            color: #c33;
+            border: 1px solid #fcc;
+        }
+
+        .message.success {
+            background: #efe;
+            color: #3c3;
+            border: 1px solid #cfc;
+        }
+
+        .message.info {
+            background: #eef;
+            color: #33c;
+            border: 1px solid #ccf;
+        }
+
+        .result-box {
+            background: #f7f7f7;
+            padding: 16px;
+            border-radius: 6px;
+            margin-top: 20px;
+            word-break: break-all;
+        }
+
+        .result-box h3 {
+            font-size: 16px;
+            margin-bottom: 12px;
+            color: #333;
+        }
+
+        .result-box .result-item {
+            margin-bottom: 12px;
+        }
+
+        .result-box .result-label {
+            font-weight: 500;
+            color: #666;
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+
+        .result-box .result-value {
+            font-family: monospace;
+            font-size: 13px;
+            color: #333;
+            background: white;
+            padding: 8px;
+            border-radius: 4px;
+            word-break: break-all;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-header h2 {
+            font-size: 20px;
+            color: #333;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+            padding: 0;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-close:hover {
+            color: #333;
+        }
+
+        .modal-body {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .modal-body ol {
+            margin-left: 20px;
+        }
+
+        .modal-body li {
+            margin-bottom: 12px;
+        }
+
+        .modal-body code {
+            background: #f7f7f7;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 8px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Telegram 会话保活管理</h1>
+            <p>管理您的 Telegram 会话，保持账号活跃状态</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" data-tab="login">登录 TG 账号</button>
+            <button class="tab" data-tab="create">创建保活任务</button>
+            <button class="tab" data-tab="verify">获取验证码</button>
+        </div>
+
+        <!-- Tab 1: Login -->
+        <div class="tab-content active" id="login-tab">
+            <div id="login-message"></div>
+            
+            <div id="phone-step">
+                <div class="form-group">
+                    <label for="phone">手机号码（国际格式）</label>
+                    <input type="tel" id="phone" placeholder="+8613800138000" />
+                </div>
+                <button class="btn" id="submit-phone">发送验证码</button>
+            </div>
+
+            <div id="code-step" class="hidden">
+                <div class="form-group">
+                    <label for="code">验证码</label>
+                    <input type="text" id="code" placeholder="输入收到的验证码" />
+                </div>
+                <button class="btn" id="submit-code">提交验证码</button>
+            </div>
+
+            <div id="password-step" class="hidden">
+                <div class="form-group">
+                    <label for="password">两步验证密码</label>
+                    <input type="password" id="password" placeholder="输入两步验证密码" />
+                </div>
+                <button class="btn" id="submit-password">提交密码</button>
+            </div>
+
+            <div id="session-result" class="hidden">
+                <div class="result-box">
+                    <h3>登录成功！</h3>
+                    <div class="result-item">
+                        <div class="result-label">StringSession:</div>
+                        <div class="result-value" id="session-string-display"></div>
+                    </div>
+                    <button class="btn btn-secondary" id="copy-session">📋 复制 Session</button>
+                </div>
+                <button class="btn btn-secondary" id="goto-create">创建保活任务</button>
+            </div>
+        </div>
+
+        <!-- Tab 2: Create Task -->
+        <div class="tab-content" id="create-tab">
+            <div id="create-message"></div>
+            
+            <div id="validate-step">
+                <div class="form-group">
+                    <label for="session-string">StringSession</label>
+                    <textarea id="session-string" placeholder="粘贴您的 StringSession"></textarea>
+                </div>
+                <button class="btn" id="validate-session">验证 Session</button>
+            </div>
+
+            <div id="account-info" class="hidden">
+                <div class="result-box">
+                    <h3>账号信息</h3>
+                    <div class="result-item">
+                        <div class="result-label">Telegram ID:</div>
+                        <div class="result-value" id="tg-id-display"></div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-label">Session String:</div>
+                        <div class="result-value" id="session-string-confirm"></div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="notify-chat-id">通知接收者 ID</label>
+                    <div class="input-with-help">
+                        <input type="text" id="notify-chat-id" placeholder="输入 Telegram ID" />
+                        <button class="help-btn" id="show-help">?</button>
+                    </div>
+                </div>
+
+                <div class="message info">
+                    <strong>重要提示：</strong>创建任务前，请先在 Telegram 中搜索并 start bot: <code id="bot-name-display"></code>
+                </div>
+
+                <button class="btn" id="create-task">创建保活任务</button>
+            </div>
+
+            <div id="task-result" class="hidden">
+                <div class="result-box">
+                    <h3>任务创建成功！</h3>
+                    <div class="result-item">
+                        <div class="result-label">验证码接收 URL:</div>
+                        <div class="result-value">
+                            <a href="#" id="verify-url" target="_blank"></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 3: Verify Code -->
+        <div class="tab-content" id="verify-tab">
+            <div id="verify-message"></div>
+            
+            <div id="verify-input-step">
+                <div class="form-group">
+                    <label for="verify-session-string">StringSession</label>
+                    <textarea id="verify-session-string" placeholder="粘贴您的 StringSession"></textarea>
+                </div>
+                <button class="btn" id="start-listen">开始监听验证码</button>
+            </div>
+
+            <div id="verify-waiting" class="hidden">
+                <div class="message info">
+                    <strong>等待验证码...</strong>
+                    <div>已等待: <span id="elapsed-time">0</span> 秒</div>
+                    <div class="loading"></div>
+                </div>
+                <button class="btn btn-secondary" id="cancel-listen">取消监听</button>
+            </div>
+
+            <div id="verify-result" class="hidden">
+                <div class="result-box">
+                    <h3>收到验证码！</h3>
+                    <div class="result-item">
+                        <div class="result-label">验证码:</div>
+                        <div class="result-value" id="code-display" style="font-size: 24px; font-weight: bold; text-align: center;"></div>
+                    </div>
+                </div>
+                <button class="btn btn-secondary" id="listen-again">再次监听</button>
+            </div>
+
+            <div id="verify-task-info" class="hidden">
+                <div class="result-box">
+                    <h3>任务信息</h3>
+                    <div class="result-item">
+                        <div class="result-label">任务 UUID:</div>
+                        <div class="result-value" id="task-uuid-display"></div>
+                    </div>
+                    <div class="result-item">
+                        <div class="result-label">Telegram ID:</div>
+                        <div class="result-value" id="task-tg-id-display"></div>
+                    </div>
+                </div>
+                <button class="btn" id="start-listen-task">开始监听验证码</button>
+                <button class="btn btn-secondary" id="delete-task" style="background: #dc3545; margin-top: 10px;">🗑️ 删除此任务</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div class="modal" id="help-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>如何获取 Telegram ID</h2>
+                <button class="modal-close" id="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p>请按照以下步骤获取您的 Telegram ID：</p>
+                <ol>
+                    <li>在 Telegram 中搜索 <code>@userinfobot</code> 或 <code>@getidsbot</code></li>
+                    <li>向 bot 发送任意消息（例如：<code>/start</code>）</li>
+                    <li>bot 会返回您的 Telegram ID</li>
+                    <li>将返回的 ID 复制到"通知接收者 ID"输入框中</li>
+                </ol>
+                <p><strong>注意：</strong>默认情况下，通知会发送到当前登录的账号。如果您想接收到其他账号，请修改此 ID。</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

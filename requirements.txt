@@ -1,0 +1,8 @@
+telethon==1.42.0
+fastapi
+uvicorn
+apscheduler
+httpx
+sse-starlette
+pydantic
+pydantic-settings

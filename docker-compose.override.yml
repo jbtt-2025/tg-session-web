@@ -1,0 +1,23 @@
+# Development override configuration
+# This file is automatically loaded by docker-compose and overrides settings in docker-compose.yml
+# Use this for local development with hot-reload and debug settings
+#
+# To use production image instead of building from source:
+#   Rename this file: mv docker-compose.override.yml docker-compose.override.yml.disabled
+#   Then run: docker-compose up -d
+
+version: '3.8'
+
+services:
+  web:
+    # Build from source for development
+    build: .
+    # Mount source code for hot-reload during development
+    volumes:
+      - .:/app
+      - /app/__pycache__
+    # Run with reload for development
+    command: sh -c "uvicorn web_server:app --host 0.0.0.0 --port ${PORT:-8000} --reload"
+    environment:
+      # Enable debug logging
+      LOG_LEVEL: DEBUG
