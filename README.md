@@ -43,9 +43,9 @@
 
 ### 1. 获取 Telegram API 凭证
 
-1. 访问 https://my.telegram.org，使用你的 Telegram 账号登录
+1. 访问 https://my.telegram.org ,使用你的 Telegram 账号登录
 2. 点击 "API development tools"
-3. 创建应用（名称/描述随意，平台选其他即可）
+3. 创建应用（名称/描述随意，平台选其他即可）（失败可以换家宽IP试试，有奇效）
 4. 记录 `App api_id` 和 `App api_hash`
 
 ### 2. 创建 Telegram Bot
@@ -172,7 +172,7 @@ export PORT=3000
 uvicorn web_server:app --host 0.0.0.0 --port $PORT
 ```
 
-4. 访问 Web 界面：http://localhost:8000（或你配置的端口）
+4. 访问 Web 界面：http://localhost:8000 （或你配置的端口）
 
 ## 使用指南
 
@@ -493,4 +493,5 @@ server {
 - **前端**：HTML + JavaScript（原生）
 - **实时通信**：Server-Sent Events (SSE)
 - **数据存储**：JSON 文件
+
 - **容器化**：Docker + Docker Compose
