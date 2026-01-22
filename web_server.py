@@ -603,6 +603,7 @@ async def validate_task_session(request: ValidateSessionRequest):
                 "phone": account_info.get("phone"),
                 "first_name": account_info.get("first_name"),
                 "last_name": account_info.get("last_name"),
+                "bot_name": config.notify_bot_name,
                 "message": "Session is valid"
             }
         )
