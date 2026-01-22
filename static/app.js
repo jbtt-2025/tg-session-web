@@ -291,8 +291,10 @@ function displayAccountInfo(data) {
     document.getElementById('session-string-confirm').textContent = createState.sessionString;
     document.getElementById('notify-chat-id').value = data.tg_id;
     
-    // Display bot name
-    document.getElementById('bot-name-display').textContent = data.bot_name || '@your_bot';
+    // Display bot name with @ prefix
+    const botName = data.bot_name || '';
+    const displayName = botName.startsWith('@') ? botName : `@${botName}`;
+    document.getElementById('bot-name-display').textContent = displayName || '@your_bot';
     
     clearMessage('create-message');
 }
